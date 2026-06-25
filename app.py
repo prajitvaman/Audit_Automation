@@ -133,7 +133,6 @@ col3.metric("File type", uploaded_file.name.split(".")[-1].upper())
 with st.expander("Preview uploaded data", expanded=True):
     st.dataframe(df.head(20), use_container_width=True)
 
-
 # ============================================================
 # SCHEMA INFERENCE + MANUAL OVERRIDE
 # ============================================================
@@ -155,31 +154,30 @@ for field, info in mapping_result.items():
 mapping_df = pd.DataFrame(mapping_rows)
 st.dataframe(mapping_df, use_container_width=True)
 
-st.subheader("Manual Mapping Override")
-st.caption("Keep the suggested mapping if correct, or override any field below.")
 
-manual_mapping = {}
-raw_options = [None] + list(df.columns)
+# ✅ FORM STARTS HERE
+with st.form("run_form"):
 
-with st.expander("Edit mapping", expanded=False):
-    for field in STANDARD_SCHEMA.keys():
-        suggested = default_mapping.get(field)
-        default_index = raw_options.index(suggested) if suggested in raw_options else 0
-        manual_mapping[field] = st.selectbox(
-            label=field,
-            options=raw_options,
-            index=default_index,
-            key=f"map_{field}"
-        )
+    st.subheader("Manual Mapping Override")
+    st.caption("Keep the suggested mapping if correct, or override any field below.")
 
+    manual_mapping = {}
+    raw_options = [None] + list(df.columns)
 
-# ============================================================
-# RUN PIPELINE
-# ============================================================
+    with st.expander("Edit mapping", expanded=False):
+        for field in STANDARD_SCHEMA.keys():
+            suggested = default_mapping.get(field)
+            default_index = raw_options.index(suggested) if suggested in raw_options else 0
 
-st.header("2. Run Audit Pipeline")
+            manual_mapping[field] = st.selectbox(
+                label=field,
+                options=raw_options,
+                index=default_index,
+                key=f"map_{field}"
+            )
 
-run_clicked = st.button("Run Audit Engine", type="primary")
+    # ✅ BUTTON MOVES INSIDE FORM
+    run_clicked = st.form_submit_button("Run Audit Engine", type="primary")
 
 if run_clicked:
     try:
