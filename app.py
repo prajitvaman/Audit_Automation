@@ -18,6 +18,26 @@ from core_logic import (
     apply_semi_supervised_adjustment,
 )
 
+# ✅ CACHED WRAPPERS (ADD THIS HERE)
+@st.cache_data
+def cached_load_data(file):
+    return load_data(file)
+
+@st.cache_data
+def cached_infer_schema(df):
+    return infer_schema(df)
+
+@st.cache_data
+def cached_pipeline(df, manual_mapping, threshold, contamination, rule_weight, ml_weight):
+    return run_full_audit_pipeline(
+        df=df,
+        manual_mapping=manual_mapping,
+        threshold=threshold,
+        contamination=contamination,
+        rule_weight=rule_weight,
+        ml_weight=ml_weight
+    )
+
 
 # ============================================================
 # PAGE CONFIG
@@ -89,6 +109,8 @@ if "current_label_pos" not in st.session_state:
 # FILE UPLOAD
 # ============================================================
 
+
+
 uploaded_file = st.file_uploader("Upload CSV / Excel file", type=["csv", "xlsx", "xls"])
 
 if uploaded_file is None:
@@ -96,7 +118,7 @@ if uploaded_file is None:
     st.stop()
 
 try:
-    df = load_data(uploaded_file)
+    df = cached_load_data(uploaded_file)
 except Exception as e:
     st.error(f"Could not load file: {e}")
     st.stop()
@@ -118,7 +140,7 @@ with st.expander("Preview uploaded data", expanded=True):
 
 st.header("1. Schema Mapping")
 
-mapping_result = infer_schema(df)
+mapping_result = cached_infer_schema(df)
 default_mapping = mapping_result_to_manual_mapping(mapping_result)
 
 mapping_rows = []
@@ -162,7 +184,7 @@ run_clicked = st.button("Run Audit Engine", type="primary")
 if run_clicked:
     try:
         with st.spinner("Running audit checks and anomaly scoring..."):
-            st.session_state.pipeline_result = run_full_audit_pipeline(
+            st.session_state.pipeline_result = cached_pipeline(
                 df=df,
                 manual_mapping=manual_mapping,
                 threshold=threshold,
